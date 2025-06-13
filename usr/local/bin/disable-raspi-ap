@@ -1,0 +1,25 @@
+#!/bin/bash
+
+SERVICE_NAME="raspi-ap"
+SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
+
+echo "[INFO] Disabling $SERVICE_NAME service..."
+
+# Disable and stop the service
+systemctl disable "$SERVICE_NAME" 2>/dev/null
+systemctl stop "$SERVICE_NAME" 2>/dev/null
+
+# Remove the service file
+if [ -f "$SERVICE_FILE" ]; then
+  echo "[INFO] Removing service file: $SERVICE_FILE"
+  rm "$SERVICE_FILE"
+else
+  echo "[WARN] No service file found at $SERVICE_FILE"
+fi
+
+# Reload systemd to reflect changes
+echo "[INFO] Reloading systemd..."
+systemctl daemon-reexec
+systemctl daemon-reload
+
+echo "[✅] Auto-start has been disabled. Your Raspberry Pi will no longer start the AP on boot."

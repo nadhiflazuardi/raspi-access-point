@@ -1,0 +1,37 @@
+#!/bin/bash
+
+SERVICE_NAME="raspi-ap"
+SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
+SCRIPT_PATH="/usr/local/bin/raspi-ap-start"
+
+# Check if the main script exists
+if [ ! -f "$SCRIPT_PATH" ]; then
+  echo "[❌] Setup script not found at $SCRIPT_PATH"
+  exit 1
+fi
+
+echo "[INFO] Making sure $SCRIPT_PATH is executable..."
+chmod +x "$SCRIPT_PATH"
+
+echo "[INFO] Creating systemd service at $SERVICE_FILE..."
+cat > "$SERVICE_FILE" <<EOF
+[Unit]
+Description=Start Raspberry Pi Access Point on Boot
+After=network.target
+Wants=network.target
+
+[Service]
+ExecStart=$SCRIPT_PATH
+Type=oneshot
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+echo "[INFO] Reloading systemd and enabling service..."
+systemctl daemon-reexec
+systemctl daemon-reload
+systemctl enable "$SERVICE_NAME"
+
+echo "[✅] Access Point is now set to start automatically on boot!"

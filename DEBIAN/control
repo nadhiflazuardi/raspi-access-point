@@ -1,0 +1,8 @@
+Package: raspi-ap-setup
+Version: 1.0.0
+Section: utils
+Priority: optional
+Architecture: all
+Maintainer: nadhiflazuardi berkasnadhif@gmail.com
+Depends: hostapd, dnsmasq, iptables, iptables-persistent, netfilter-persistent
+Description: Raspberry Pi Access Point setup utility

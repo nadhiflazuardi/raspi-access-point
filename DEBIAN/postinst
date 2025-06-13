@@ -1,0 +1,10 @@
+#!/bin/bash
+
+echo
+echo "[✔] raspi-ap package installed successfully!"
+echo
+echo "Available commands:"
+echo "  🔹 sudo raspi-ap-start     → Start the Raspberry Pi access point"
+echo "  🔹 sudo raspi-ap-stop      → Stop the access point and revert config"
+echo "  🔹 sudo raspi-ap-enable    → Register the AP to auto-start on boot"
+echo "  🔹 sudo raspi-ap-disable   → Unregister auto-start on boot"
