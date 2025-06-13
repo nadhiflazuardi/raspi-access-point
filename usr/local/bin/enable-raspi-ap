@@ -2,7 +2,7 @@
 
 SERVICE_NAME="raspi-ap"
 SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
-SCRIPT_PATH="/usr/local/bin/raspi-ap-start"
+SCRIPT_PATH="/usr/local/bin/start-raspi-ap"
 
 # Check if the main script exists
 if [ ! -f "$SCRIPT_PATH" ]; then
