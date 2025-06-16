@@ -1,0 +1,23 @@
+#!/bin/bash
+
+CONFIG_FILE="/etc/raspi-ap/config.conf"
+mkdir -p /etc/raspi-ap
+
+if [ -f "$CONFIG_FILE" ]; then
+    source "$CONFIG_FILE"
+fi
+
+read -p "Enter SSID (default: $SSID): " new_ssid
+read -p "Enter Passphrase (default: $PASSPHRASE): " new_pass
+
+SSID="${new_ssid:-$SSID}"
+PASSPHRASE="${new_pass:-$PASSPHRASE}"
+
+cat <<EOF > "$CONFIG_FILE"
+WLAN_IFACE=${WLAN_IFACE:-wlan0}
+STATIC_IP=${STATIC_IP:-192.168.4.1}
+SSID="$SSID"
+PASSPHRASE="$PASSPHRASE"
+EOF
+
+echo "[✔] Config updated! You can now re-run 'sudo start-raspi-ap'."
