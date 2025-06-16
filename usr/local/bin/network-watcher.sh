@@ -1,9 +1,13 @@
 #!/bin/bash
 
+CONFIG_FILE="/etc/raspi-ap/config.conf"
+
 LOG_FILE="/var/log/netlink.log"
 
 LAST_WLAN0_STATE=""
 LAST_ETH0_STATE=""
+
+STATIC_IP=$(grep "^STATIC_IP=" "$CONFIG_FILE" | cut -d '=' -f2)
 
 ip monitor link | while read line; do
     echo "[$(date)] $line" >> $LOG_FILE
@@ -15,8 +19,14 @@ ip monitor link | while read line; do
             /usr/local/bin/start-raspi-ap
             LAST_WLAN0_STATE="DOWN"
         elif [[ "$line" == *"state UP"* && "$LAST_WLAN0_STATE" != "UP" ]]; then
-            echo "[$(date)] wlan0 connected! Shutting down access point..." >> $LOG_FILE
-            /usr/local/bin/stop-raspi-ap
+            # Check if wlan0 has STATIC_IP
+            CURRENT_IP=$(ip -4 addr show wlan0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
+            if [[ "$CURRENT_IP" == "$STATIC_IP" ]]; then
+                echo "[$(date)] wlan0 is UP with STATIC_IP ($STATIC_IP), skipping shutdown to avoid loop" >> $LOG_FILE
+            else
+                echo "[$(date)] wlan0 connected! Shutting down access point..." >> $LOG_FILE
+                /usr/local/bin/stop-raspi-ap
+            fi
             LAST_WLAN0_STATE="UP"
         fi
     fi
