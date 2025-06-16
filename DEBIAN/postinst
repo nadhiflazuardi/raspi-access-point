@@ -13,3 +13,5 @@ echo "  🔹 sudo stop-raspi-ap      → Stop the access point and revert config
 echo "  🔹 sudo enable-raspi-ap    → Enable auto-start on boot"
 echo "  🔹 sudo disable-raspi-ap   → Disable auto-start on boot"
 echo "  🔹 sudo config-raspi-ap    → Reconfigure SSID and password"
+echo "  🔹 sudo enable-network-watcher → Start and enable network watcher on boot"
+echo "  🔹 sudo disable-network-watcher→ Stop and disable network watcher on boot"
