@@ -24,8 +24,8 @@ ip monitor link | while read line; do
             else
                 echo "[$(date)] wlan0 CONNECTED! Shutting down access point..." >> $LOG_FILE
                 /usr/local/bin/stop-raspi-ap
+                LAST_WLAN0_STATE="UP"
             fi
-            LAST_WLAN0_STATE="UP"
         fi
     fi
 
