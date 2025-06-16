@@ -8,7 +8,7 @@ echo ""
 echo "Last 15 logs related to access point:"
 echo "-----------------------------------------------"
 if [ -f /var/log/netlink.log ]; then
-    grep "access point" /var/log/netlink.log | tail -n 15
+    strings /var/log/netlink.log | grep "access point" | tail -n 15
 else
     echo "Log file not found!"
 fi
