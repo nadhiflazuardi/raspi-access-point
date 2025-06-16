@@ -1,0 +1,16 @@
+#!/bin/bash
+
+SERVICE_PATH="/etc/systemd/system/network-watcher.service"
+
+echo "Stopping and disabling network-watcher..."
+
+sudo systemctl stop network-watcher
+sudo systemctl disable network-watcher
+
+if [ -f "$SERVICE_PATH" ]; then
+    sudo rm "$SERVICE_PATH"
+    echo "Removed systemd service file."
+fi
+
+sudo systemctl daemon-reload
+echo "network-watcher is disabled and removed from boot."

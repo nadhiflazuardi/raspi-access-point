@@ -1,0 +1,31 @@
+#!/bin/bash
+
+SERVICE_PATH="/etc/systemd/system/network-watcher.service"
+SCRIPT_PATH="/usr/local/bin/network-watcher.sh"
+
+if [ ! -f "$SCRIPT_PATH" ]; then
+    echo "$SCRIPT_PATH not found. Make sure your watcher script exists."
+    exit 1
+fi
+
+echo "Creating systemd service for network-watcher..."
+
+cat <<EOF | sudo tee "$SERVICE_PATH" > /dev/null
+[Unit]
+Description=Network Disconnection Monitor
+After=network.target
+
+[Service]
+ExecStart=$SCRIPT_PATH
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo chmod 644 "$SERVICE_PATH"
+sudo systemctl daemon-reload
+sudo systemctl enable network-watcher
+sudo systemctl start network-watcher
+
+echo "network-watcher is enabled and running on boot."
