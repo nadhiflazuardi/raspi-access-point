@@ -1,10 +1,12 @@
 #!/bin/bash
 
-# Variables
-WLAN_IFACE="wlan0"
-STATIC_IP="192.168.4.1"
-SSID="Raspi AP"
-PASSPHRASE="forindo13"
+CONFIG_FILE="/etc/raspi-ap/config.conf"
+if [ -f "$CONFIG_FILE" ]; then
+    source "$CONFIG_FILE"
+else
+    echo "[ERR] Config file not found: $CONFIG_FILE"
+    exit 1
+fi
 
 echo "[1] Setting static IP for $WLAN_IFACE"
 cat <<EOF >> /etc/dhcpcd.conf
