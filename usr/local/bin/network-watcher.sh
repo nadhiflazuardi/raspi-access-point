@@ -2,18 +2,36 @@
 
 LOG_FILE="/var/log/netlink.log"
 
+LAST_WLAN0_STATE=""
+LAST_ETH0_STATE=""
+
 ip monitor link | while read line; do
     echo "[$(date)] $line" >> $LOG_FILE
 
-    # Detect DISCONNECT
-    if [[ "$line" == *"wlan0"* && "$line" == *"state DOWN"* ]] || [[ "$line" == *"eth0"* && "$line" == *"state DOWN"* ]]; then
-        echo "[$(date)] 🔌 Network disconnected! Turning on access point..." >> $LOG_FILE
-        /usr/local/bin/start-raspi-ap
+    # --- wlan0 ---
+    if [[ "$line" == *"wlan0"* ]]; then
+        if [[ "$line" == *"state DOWN"* && "$LAST_WLAN0_STATE" != "DOWN" ]]; then
+            echo "[$(date)] wlan0 disconnected! Turning on access point..." >> $LOG_FILE
+            /usr/local/bin/start-raspi-ap
+            LAST_WLAN0_STATE="DOWN"
+        elif [[ "$line" == *"state UP"* && "$LAST_WLAN0_STATE" != "UP" ]]; then
+            echo "[$(date)] wlan0 connected! Shutting down access point..." >> $LOG_FILE
+            /usr/local/bin/stop-raspi-ap
+            LAST_WLAN0_STATE="UP"
+        fi
     fi
 
-    # Detect CONNECT
-    if [[ "$line" == *"wlan0"* && "$line" == *"state UP"* ]] || [[ "$line" == *"eth0"* && "$line" == *"state UP"* ]]; then
-        echo "[$(date)] 🔗 Network connected! Shutting down access point..." >> $LOG_FILE
-        /usr/local/bin/stop-raspi-ap
+    # --- eth0 ---
+    if [[ "$line" == *"eth0"* ]]; then
+        if [[ "$line" == *"state DOWN"* && "$LAST_ETH0_STATE" != "DOWN" ]]; then
+            echo "[$(date)] eth0 disconnected! Turning on access point..." >> $LOG_FILE
+            /usr/local/bin/start-raspi-ap
+            LAST_ETH0_STATE="DOWN"
+        elif [[ "$line" == *"state UP"* && "$LAST_ETH0_STATE" != "UP" ]]; then
+            echo "[$(date)] eth0 connected! Shutting down access point..." >> $LOG_FILE
+            /usr/local/bin/stop-raspi-ap
+            LAST_ETH0_STATE="UP"
+        fi
     fi
+
 done
