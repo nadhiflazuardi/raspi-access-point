@@ -15,4 +15,5 @@ ip monitor link | while read line; do
     if [[ "$line" == *"wlan0"* && "$line" == *"state UP"* ]] || [[ "$line" == *"eth0"* && "$line" == *"state UP"* ]]; then
         echo "[$(date)] 🔗 Network connected! Shutting down access point..." >> $LOG_FILE
         /usr/local/bin/stop-raspi-ap
+    fi
 done
