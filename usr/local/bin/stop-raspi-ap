@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Variables
 WLAN_IFACE="wlan0"
 DHCPCD_CONF="/etc/dhcpcd.conf"
 DNSMASQ_CONF="/etc/dnsmasq.conf"
@@ -8,50 +7,53 @@ HOSTAPD_CONF="/etc/hostapd/hostapd.conf"
 HOSTAPD_DEFAULT="/etc/default/hostapd"
 IPTABLES_RULES="/etc/iptables/rules.v4"
 
-# Dynamically detect Ethernet interface (eth0, end0, enx..., etc.)
+# Detect ethernet interface
 get_eth_interface() {
     ip -o link show | awk -F': ' '{print $2}' | grep -E '^en[a-z0-9]*$' | head -n1
 }
-
 ETH_IFACE=$(get_eth_interface)
-
 if [ -z "$ETH_IFACE" ]; then
-    echo "[ERR] Could not detect Ethernet interface (eth0/end0/enx...)"
+    echo "[ERR] Could not detect Ethernet interface"
     exit 1
 fi
 
-echo "[1] Reverting static IP setup in $DHCPCD_CONF..."
-# Remove the static IP config block for wlan0
-sed -i '/interface wlan0/,+2d' "$DHCPCD_CONF"
+echo "[1] Removing static IP from $DHCPCD_CONF..."
+sed -i '/interface wlan0/,+3d' "$DHCPCD_CONF"
 
 echo "[2] Restoring original dnsmasq config..."
 [ -f "${DNSMASQ_CONF}.orig" ] && mv "${DNSMASQ_CONF}.orig" "$DNSMASQ_CONF"
 
-echo "[3] Disabling hostapd..."
-systemctl disable hostapd
+echo "[3] Stopping hostapd and dnsmasq..."
 systemctl stop hostapd
-
-echo "[4] Disabling dnsmasq..."
+systemctl disable hostapd
 systemctl stop dnsmasq
 
-echo "[5] Removing custom hostapd config..."
+echo "[4] Cleaning up hostapd config..."
 rm -f "$HOSTAPD_CONF"
 echo 'DAEMON_CONF=""' > "$HOSTAPD_DEFAULT"
 
-echo "[6] Disabling IPv4 forwarding..."
+echo "[5] Disabling IPv4 forwarding..."
 sed -i 's/^net.ipv4.ip_forward=1/#net.ipv4.ip_forward=1/' /etc/sysctl.conf
 sysctl -p
 
-echo "[7] Flushing iptables NAT rules..."
+echo "[6] Flushing iptables rules..."
 iptables -t nat -D POSTROUTING -o "$ETH_IFACE" -j MASQUERADE 2>/dev/null
 iptables -F
 iptables -t nat -F
 iptables -X
 iptables -t nat -X
-# Optionally clear saved rules
 [ -f "$IPTABLES_RULES" ] && rm -f "$IPTABLES_RULES"
 
-echo "[8] Restarting networking services..."
+echo "[7] Restarting dhcpcd..."
 systemctl restart dhcpcd
 
-echo "[✔] Access point has been disabled. Wi-Fi should return to normal client mode after reboot or reconfigure."
+# Re-enable systemd-resolved if it was previously disabled
+if [ -f /run/systemd/resolve/stub-resolv.conf ]; then
+    echo "[8] Re-enabling systemd-resolved..."
+    systemctl enable systemd-resolved
+    systemctl start systemd-resolved
+    rm -f /etc/resolv.conf
+    ln -s /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
+fi
+
+echo "[✔] Access point has been stopped and reverted."
