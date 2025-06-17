@@ -9,7 +9,7 @@ LAST_ETH_STATE=""
 
 # Dynamically detect Ethernet interface (eth0, end0, enx...)
 get_eth_interface() {
-    ip -o link show | awk -F': ' '{print $2}' | grep -E '^e(n|th|nx)[0-9]*$' | head -n1
+    ip -o link show | awk -F': ' '{print $2}' | grep -E '^en[a-z0-9]*$' | head -n1
 }
 
 ETH_IFACE=$(get_eth_interface)
