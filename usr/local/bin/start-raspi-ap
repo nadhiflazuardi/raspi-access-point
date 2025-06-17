@@ -1,10 +1,23 @@
 #!/bin/bash
 
 CONFIG_FILE="/etc/raspi-ap/config.conf"
+
 if [ -f "$CONFIG_FILE" ]; then
     source "$CONFIG_FILE"
 else
     echo "[ERR] Config file not found: $CONFIG_FILE"
+    exit 1
+fi
+
+# Dynamically detect Ethernet interface (eth0, end0, enx..., etc.)
+get_eth_interface() {
+    ip -o link show | awk -F': ' '{print $2}' | grep -E '^e(n|th|nx)[0-9]*$' | head -n1
+}
+
+ETH_IFACE=$(get_eth_interface)
+
+if [ -z "$ETH_IFACE" ]; then
+    echo "[ERR] Could not detect Ethernet interface (eth0/end0/enx...)"
     exit 1
 fi
 
@@ -50,8 +63,8 @@ echo "[5] Enabling IPv4 forwarding..."
 sed -i 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/' /etc/sysctl.conf
 sysctl -p
 
-echo "[6] Setting up NAT using iptables..."
-iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+echo "[6] Setting up NAT using iptables on $ETH_IFACE..."
+iptables -t nat -A POSTROUTING -o "$ETH_IFACE" -j MASQUERADE
 sh -c "iptables-save > /etc/iptables/rules.v4"
 
 echo "[7] Restarting services..."
