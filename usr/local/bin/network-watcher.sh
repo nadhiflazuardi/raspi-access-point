@@ -84,7 +84,7 @@ handle_wlan0_down() {
 
     local eth_status=$(get_interface_status "$ETH_IFACE")
     if [[ "$eth_status" != "down" ]]; then
-        echo "[$(date)] wlan0 down, but $ETH_IFACE is up. No need to turn on AP." >> $LOG_FILE
+        echo "[$(date)] wlan0 down, but $ETH_IFACE is up. No need to turn on access point." >> $LOG_FILE
         return
     fi
 
@@ -104,14 +104,14 @@ handle_wlan0_up() {
     
     # Only shut down AP if wlan0 actually has internet connectivity
     if ! is_wlan0_connected; then
-        echo "[$(date)] wlan0 UP but not connected to network, keeping AP active" >> $LOG_FILE
+        echo "[$(date)] wlan0 UP but not connected to network, keeping access point active" >> $LOG_FILE
         return
     fi
     
     IS_AP_MODE=$(systemctl is-active hostapd 2>/dev/null)
 
     if [[ "$IS_AP_MODE" != "active" ]]; then
-        echo "[$(date)] wlan0 connected but AP already inactive" >> $LOG_FILE
+        echo "[$(date)] wlan0 connected but access point already inactive" >> $LOG_FILE
         return
     fi
 
@@ -128,7 +128,7 @@ handle_eth_down() {
 
     local wlan_status=$(get_interface_status wlan0)
     if [[ "$wlan_status" != "down" ]] && is_wlan0_connected; then
-        echo "[$(date)] $ETH_IFACE down, but wlan0 is up and connected. No need to turn on AP." >> $LOG_FILE
+        echo "[$(date)] $ETH_IFACE down, but wlan0 is up and connected. No need to turn on access point." >> $LOG_FILE
         return
     fi
 
