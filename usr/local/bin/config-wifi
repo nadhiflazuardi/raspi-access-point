@@ -1,0 +1,34 @@
+#!/bin/bash
+
+CONFIG_FILE="/etc/raspi-ap/config.conf"
+mkdir -p /etc/raspi-ap
+
+# Load existing config if available
+if [ -f "$CONFIG_FILE" ]; then
+    source "$CONFIG_FILE"
+fi
+
+echo "Configure fallback home Wi-Fi"
+echo "This will be used when the access point is turned off."
+echo "If you don't have a Wi-Fi to reconnect to, just press Enter to skip."
+
+read -p "Enter Wi-Fi SSID (press Enter to skip): " new_wifi_ssid
+read -p "Enter Wi-Fi Passphrase (press Enter to skip): " new_wifi_pass
+
+USER_WIFI_SSID="${new_wifi_ssid:-$USER_WIFI_SSID}"
+USER_WIFI_PASSPHRASE="${new_wifi_pass:-$USER_WIFI_PASSPHRASE}"
+
+# Remove existing wifi values from config
+sed -i '/^USER_WIFI_SSID=/d' "$CONFIG_FILE"
+sed -i '/^USER_WIFI_PASSPHRASE=/d' "$CONFIG_FILE"
+
+# Add new values only if provided
+if [[ -n "$USER_WIFI_SSID" && -n "$USER_WIFI_PASSPHRASE" ]]; then
+    echo "USER_WIFI_SSID=\"$USER_WIFI_SSID\"" >> "$CONFIG_FILE"
+    echo "USER_WIFI_PASSPHRASE=\"$USER_WIFI_PASSPHRASE\"" >> "$CONFIG_FILE"
+    echo "[✔] Wi-Fi config updated!"
+else
+    echo "USER_WIFI_SSID=\"\"" >> "$CONFIG_FILE"
+    echo "USER_WIFI_PASSPHRASE=\"\"" >> "$CONFIG_FILE"
+    echo "[ℹ] Wi-Fi config skipped. Device will not auto-reconnect after AP is stopped."
+fi
