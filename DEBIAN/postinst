@@ -5,6 +5,7 @@ echo "[✔] raspi-ap package installed successfully!"
 echo
 
 /usr/local/bin/config-raspi-ap
+/usr/local/bin/config-wifi
 
 echo
 echo "Available commands:"
