@@ -1,11 +1,18 @@
 #!/bin/bash
 
+CONFIG_FILE="/etc/raspi-ap/config.conf"
 WLAN_IFACE="wlan0"
 DHCPCD_CONF="/etc/dhcpcd.conf"
 DNSMASQ_CONF="/etc/dnsmasq.conf"
 HOSTAPD_CONF="/etc/hostapd/hostapd.conf"
 HOSTAPD_DEFAULT="/etc/default/hostapd"
 IPTABLES_RULES="/etc/iptables/rules.v4"
+WPA_SUPPLICANT_CONF="/etc/wpa_supplicant/wpa_supplicant.conf"
+
+# Load user config if exists
+if [ -f "$CONFIG_FILE" ]; then
+    source "$CONFIG_FILE"
+fi
 
 # Detect ethernet interface
 get_eth_interface() {
@@ -56,4 +63,38 @@ if [ -f /run/systemd/resolve/stub-resolv.conf ]; then
     ln -s /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
 fi
 
-echo "[✔] Access point has been stopped and reverted."
+
+# Try reconnecting to original Wi-Fi
+if [[ -n "$USER_WIFI_SSID" && -n "$USER_WIFI_PASSPHRASE" ]]; then
+    echo "[9] Access point is being turned off. Trying to reconnect to Wi-Fi: $USER_WIFI_SSID"
+    
+    echo "[10] Writing wpa_supplicant config..."
+    cat <<EOF > "$WPA_SUPPLICANT_CONF"
+ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+update_config=1
+country=ID
+
+network={
+    ssid="$USER_WIFI_SSID"
+    psk="$USER_WIFI_PASSPHRASE"
+}
+EOF
+
+    echo "[11] Ensuring wpa_supplicant is running..."
+    if ! pgrep -f "wpa_supplicant.*$WLAN_IFACE" > /dev/null; then
+        systemctl start wpa_supplicant
+        sleep 3
+        if ! pgrep -f "wpa_supplicant.*$WLAN_IFACE" > /dev/null; then
+            echo "[⚠️] systemd failed. Starting wpa_supplicant manually..."
+            wpa_supplicant -B -i "$WLAN_IFACE" -c "$WPA_SUPPLICANT_CONF"
+            sleep 3
+        fi
+    fi
+
+    echo "[12] Reconfiguring connection to Wi-Fi '$USER_WIFI_SSID'..."
+    wpa_cli -i "$WLAN_IFACE" reconfigure
+else
+    echo "USER_WIFI_SSID or USER_WIFI_PASSPHRASE not set in config. Skipping reconnect."
+fi
+
+echo "[✔] Access point has been stopped and system reverted."
